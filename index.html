@@ -1,0 +1,369 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>来打王者吗？</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      background: linear-gradient(135deg, #1a0533 0%, #2d1b69 30%, #4a2c8a 60%, #1a0533 100%);
+      font-family: 'Microsoft YaHei', 'PingFang SC', sans-serif;
+      overflow: hidden;
+      position: relative;
+    }
+
+    /* 飘落的花瓣粒子 */
+    .petal {
+      position: fixed;
+      width: 12px;
+      height: 12px;
+      background: radial-gradient(ellipse, #ffb6c1, #ff69b4);
+      border-radius: 50% 0 50% 0;
+      opacity: 0.6;
+      animation: fall linear infinite;
+      pointer-events: none;
+    }
+    @keyframes fall {
+      0% { transform: translateY(-10vh) rotate(0deg); opacity: 0.7; }
+      100% { transform: translateY(110vh) rotate(720deg); opacity: 0; }
+    }
+
+    .title {
+      font-size: 3.5rem;
+      font-weight: 900;
+      color: #fff;
+      text-shadow: 0 0 20px #ff6ec7, 0 0 40px #ff6ec7, 0 0 80px #d946ef;
+      margin-bottom: 10px;
+      animation: pulse 2s ease-in-out infinite;
+      letter-spacing: 8px;
+    }
+    @keyframes pulse {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.05); }
+    }
+
+    .subtitle {
+      font-size: 1.2rem;
+      color: #c4b5fd;
+      margin-bottom: 40px;
+      letter-spacing: 4px;
+    }
+
+    .characters {
+      display: flex;
+      gap: 60px;
+      margin-bottom: 50px;
+      align-items: flex-end;
+    }
+
+    /* ===== 小乔 Q版 ===== */
+    .char-box {
+      text-align: center;
+      position: relative;
+    }
+    .char-name {
+      color: #fde68a;
+      font-size: 1.1rem;
+      font-weight: bold;
+      margin-top: 12px;
+      text-shadow: 0 0 8px #f59e0b;
+    }
+
+    .xiaoqiao, .yaoyao {
+      position: relative;
+      animation: bounce 2s ease-in-out infinite;
+    }
+    .yaoyao { animation-delay: 0.5s; }
+
+    @keyframes bounce {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-12px); }
+    }
+
+    /* 小乔 SVG */
+    .xiaoqiao svg { filter: drop-shadow(0 0 15px rgba(255,182,193,0.5)); }
+    .yaoyao svg { filter: drop-shadow(0 0 15px rgba(147,197,253,0.5)); }
+
+    /* ===== 按钮区域 ===== */
+    .btn-area {
+      display: flex;
+      gap: 80px;
+      align-items: center;
+      position: relative;
+      min-height: 120px;
+      min-width: 500px;
+    }
+
+    .btn-come {
+      padding: 18px 60px;
+      font-size: 1.8rem;
+      font-weight: bold;
+      color: #fff;
+      background: linear-gradient(135deg, #f472b6, #e879f9, #a78bfa);
+      border: 3px solid #fff;
+      border-radius: 50px;
+      cursor: pointer;
+      transition: all 0.3s;
+      text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+      box-shadow: 0 0 20px rgba(232,121,249,0.5), 0 8px 32px rgba(0,0,0,0.3);
+      z-index: 10;
+    }
+    .btn-come:hover {
+      transform: scale(1.15);
+      box-shadow: 0 0 40px rgba(232,121,249,0.8), 0 8px 32px rgba(0,0,0,0.4);
+    }
+
+    .btn-nope {
+      padding: 18px 60px;
+      font-size: 1.8rem;
+      font-weight: bold;
+      color: #94a3b8;
+      background: linear-gradient(135deg, #334155, #475569);
+      border: 3px solid #64748b;
+      border-radius: 50px;
+      cursor: pointer;
+      position: absolute;
+      transition: none;
+      box-shadow: 0 0 10px rgba(100,116,139,0.3);
+      z-index: 20;
+      white-space: nowrap;
+    }
+
+    /* 弹窗 */
+    .overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.7);
+      z-index: 999;
+      align-items: center;
+      justify-content: center;
+    }
+    .overlay.show { display: flex; }
+
+    .modal {
+      background: linear-gradient(135deg, #2d1b69, #4a2c8a);
+      border: 3px solid #e879f9;
+      border-radius: 24px;
+      padding: 50px 60px;
+      text-align: center;
+      animation: popIn 0.4s ease;
+      box-shadow: 0 0 60px rgba(232,121,249,0.4);
+    }
+    @keyframes popIn {
+      0% { transform: scale(0.3); opacity: 0; }
+      70% { transform: scale(1.1); }
+      100% { transform: scale(1); opacity: 1; }
+    }
+    .modal h2 {
+      font-size: 2.5rem;
+      color: #fde68a;
+      text-shadow: 0 0 15px #f59e0b;
+      margin-bottom: 15px;
+    }
+    .modal p {
+      font-size: 1.3rem;
+      color: #e9d5ff;
+      margin-bottom: 8px;
+    }
+    .modal .confetti { font-size: 2rem; margin-top: 10px; }
+
+    /* 逃跑次数计数 */
+    .escape-count {
+      position: fixed;
+      bottom: 20px;
+      color: #7c3aed;
+      font-size: 0.9rem;
+      opacity: 0.7;
+    }
+  </style>
+</head>
+<body>
+
+  <h1 class="title">来打王者吗？</h1>
+  <p class="subtitle">上号上号，一起冲分！</p>
+
+  <div class="characters">
+    <!-- 小乔 Q版 -->
+    <div class="char-box">
+      <div class="xiaoqiao">
+        <svg width="140" height="180" viewBox="0 0 140 180">
+          <!-- 身体/裙子 -->
+          <ellipse cx="70" cy="155" rx="38" ry="22" fill="#ffb6c1"/>
+          <path d="M45 110 Q70 170 95 110 Z" fill="#ff69b4"/>
+          <ellipse cx="70" cy="112" rx="26" ry="8" fill="#ff85c0"/>
+          <!-- 头 -->
+          <circle cx="70" cy="65" r="38" fill="#ffe4e1"/>
+          <!-- 刘海 -->
+          <path d="M32 55 Q50 20 70 30 Q90 20 108 55 Q90 40 70 42 Q50 40 32 55Z" fill="#2d1b10"/>
+          <!-- 头发两侧 -->
+          <path d="M32 60 Q20 100 30 130 Q35 110 40 90" fill="#2d1b10"/>
+          <path d="M108 60 Q120 100 110 130 Q105 110 100 90" fill="#2d1b10"/>
+          <!-- 蝴蝶结/发饰 -->
+          <circle cx="50" cy="35" r="8" fill="#ff1493"/>
+          <circle cx="90" cy="35" r="8" fill="#ff1493"/>
+          <circle cx="70" cy="30" r="5" fill="#ff69b4"/>
+          <!-- 花扇 (小乔标志) -->
+          <ellipse cx="120" cy="120" rx="18" ry="28" fill="#ffb6c1" stroke="#ff69b4" stroke-width="2" transform="rotate(-20,120,120)"/>
+          <line x1="120" y1="92" x2="120" y2="148" stroke="#ff69b4" stroke-width="1.5"/>
+          <line x1="102" y1="120" x2="138" y2="120" stroke="#ff69b4" stroke-width="1.5"/>
+          <!-- 眼睛 -->
+          <ellipse cx="57" cy="68" rx="7" ry="8" fill="#2d1b10"/>
+          <ellipse cx="83" cy="68" rx="7" ry="8" fill="#2d1b10"/>
+          <circle cx="59" cy="66" r="3" fill="#fff"/>
+          <circle cx="85" cy="66" r="3" fill="#fff"/>
+          <!-- 嘴巴 微笑 -->
+          <path d="M62 80 Q70 88 78 80" fill="none" stroke="#e75480" stroke-width="2.5" stroke-linecap="round"/>
+          <!-- 腮红 -->
+          <ellipse cx="48" cy="78" rx="8" ry="5" fill="#ffb6c1" opacity="0.6"/>
+          <ellipse cx="92" cy="78" rx="8" ry="5" fill="#ffb6c1" opacity="0.6"/>
+          <!-- 小手 -->
+          <circle cx="42" cy="130" r="7" fill="#ffe4e1"/>
+          <circle cx="98" cy="130" r="7" fill="#ffe4e1"/>
+        </svg>
+      </div>
+      <div class="char-name">小乔</div>
+    </div>
+
+    <!-- 瑶 Q版 -->
+    <div class="char-box">
+      <div class="yaoyao">
+        <svg width="140" height="180" viewBox="0 0 140 180">
+          <!-- 鹿角 -->
+          <path d="M48 30 L40 5 L45 18 L38 -2" fill="none" stroke="#8B6914" stroke-width="3.5" stroke-linecap="round"/>
+          <path d="M92 30 L100 5 L95 18 L102 -2" fill="none" stroke="#8B6914" stroke-width="3.5" stroke-linecap="round"/>
+          <!-- 身体/裙子 -->
+          <ellipse cx="70" cy="155" rx="38" ry="22" fill="#bfdbfe"/>
+          <path d="M45 110 Q70 170 95 110 Z" fill="#93c5fd"/>
+          <ellipse cx="70" cy="112" rx="26" ry="8" fill="#a5b4fc"/>
+          <!-- 头 -->
+          <circle cx="70" cy="65" r="38" fill="#ffe4e1"/>
+          <!-- 头发 -->
+          <path d="M32 55 Q50 20 70 28 Q90 20 108 55 Q95 35 70 38 Q45 35 32 55Z" fill="#4a6fa5"/>
+          <path d="M32 60 Q18 95 25 130 Q32 105 40 85" fill="#4a6fa5"/>
+          <path d="M108 60 Q122 95 115 130 Q108 105 100 85" fill="#4a6fa5"/>
+          <!-- 头顶花饰 -->
+          <circle cx="70" cy="28" r="10" fill="#f472b6"/>
+          <circle cx="70" cy="28" r="5" fill="#fde68a"/>
+          <!-- 护盾光环 -->
+          <ellipse cx="70" cy="65" rx="45" ry="45" fill="none" stroke="#93c5fd" stroke-width="1.5" opacity="0.4" stroke-dasharray="6 4"/>
+          <!-- 眼睛 -->
+          <ellipse cx="57" cy="68" rx="7" ry="9" fill="#2d1b10"/>
+          <ellipse cx="83" cy="68" rx="7" ry="9" fill="#2d1b10"/>
+          <circle cx="59" cy="65" r="3.5" fill="#fff"/>
+          <circle cx="85" cy="65" r="3.5" fill="#fff"/>
+          <!-- 嘴巴 O形 -->
+          <ellipse cx="70" cy="82" rx="5" ry="4" fill="#e75480"/>
+          <!-- 腮红 -->
+          <ellipse cx="47" cy="78" rx="8" ry="5" fill="#ffb6c1" opacity="0.6"/>
+          <ellipse cx="93" cy="78" rx="8" ry="5" fill="#ffb6c1" opacity="0.6"/>
+          <!-- 小手 -->
+          <circle cx="42" cy="130" r="7" fill="#ffe4e1"/>
+          <circle cx="98" cy="130" r="7" fill="#ffe4e1"/>
+          <!-- 法杖 -->
+          <line x1="118" y1="85" x2="118" y2="150" stroke="#8B6914" stroke-width="3"/>
+          <circle cx="118" cy="82" r="10" fill="#86efac" stroke="#22c55e" stroke-width="2"/>
+          <circle cx="118" cy="82" r="5" fill="#bbf7d0"/>
+        </svg>
+      </div>
+      <div class="char-name">瑶</div>
+    </div>
+  </div>
+
+  <div class="btn-area" id="btnArea">
+    <button class="btn-come" id="btnCome" onclick="handleCome()">来！</button>
+    <button class="btn-nope" id="btnNope">不来</button>
+  </div>
+
+  <div class="escape-count" id="escapeCount"></div>
+
+  <!-- 弹窗 -->
+  <div class="overlay" id="overlay">
+    <div class="modal">
+      <h2>好耶！上号！</h2>
+      <p>小乔和瑶瑶在等你啦~</p>
+      <p>冲冲冲！今天一定上王者！</p>
+      <div class="confetti">🎉🏆✨🎮🌟</div>
+    </div>
+  </div>
+
+  <script>
+    // 飘落花瓣
+    function createPetals() {
+      for (let i = 0; i < 25; i++) {
+        const petal = document.createElement('div');
+        petal.className = 'petal';
+        petal.style.left = Math.random() * 100 + 'vw';
+        petal.style.animationDuration = (4 + Math.random() * 6) + 's';
+        petal.style.animationDelay = Math.random() * 8 + 's';
+        petal.style.width = (8 + Math.random() * 10) + 'px';
+        petal.style.height = petal.style.width;
+        document.body.appendChild(petal);
+      }
+    }
+    createPetals();
+
+    // "不来"按钮逃跑逻辑
+    const btnNope = document.getElementById('btnNope');
+    const btnArea = document.getElementById('btnArea');
+    const escapeCountEl = document.getElementById('escapeCount');
+    let escapeCount = 0;
+
+    function escape(e) {
+      const area = btnArea.getBoundingClientRect();
+      const btnW = btnNope.offsetWidth;
+      const btnH = btnNope.offsetHeight;
+
+      // 计算新的随机位置（在btnArea范围内）
+      const maxX = area.width - btnW - 20;
+      const maxY = 60;
+      const minX = 100; // 不要跑到"来"按钮上面
+      const randX = minX + Math.random() * (maxX - minX);
+      const randY = -30 + Math.random() * maxY;
+
+      btnNope.style.left = randX + 'px';
+      btnNope.style.top = randY + 'px';
+
+      escapeCount++;
+      if (escapeCount >= 3) {
+        escapeCountEl.textContent = `"不来"按钮已逃跑 ${escapeCount} 次 😏`;
+      }
+    }
+
+    // 鼠标悬停就跑
+    btnNope.addEventListener('mouseenter', escape);
+    // 移动端触摸也跑
+    btnNope.addEventListener('touchstart', function(e) {
+      e.preventDefault();
+      escape();
+    });
+    // 点击也跑（以防万一）
+    btnNope.addEventListener('click', escape);
+
+    // 初始化位置
+    btnNope.style.left = '280px';
+    btnNope.style.top = '0px';
+
+    // "来"按钮
+    function handleCome() {
+      document.getElementById('overlay').classList.add('show');
+      // 烟花效果
+      setTimeout(() => {
+        document.getElementById('overlay').classList.remove('show');
+      }, 4000);
+    }
+
+    // 点击遮罩关闭
+    document.getElementById('overlay').addEventListener('click', function() {
+      this.classList.remove('show');
+    });
+  </script>
+</body>
+</html>
